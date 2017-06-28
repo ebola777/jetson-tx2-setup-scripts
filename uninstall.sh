@@ -52,3 +52,5 @@ while IFS= read -r ip; do
 done < "$FILENAME_IP"
 # Clean up
 bash ./cleanup.sh
+# Show the finish message
+echo 'Uninstallation has finished'
