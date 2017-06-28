@@ -24,10 +24,8 @@ while IFS= read -r ip; do
 	host="$USERNAME@$ip"
 	# Execute the script on the device
 	sshpass -p "$PASSWORD" ssh -T "$host" <<- SSH_EOF
-		# Switch to the root
-		echo "$PASSWORD" | sudo -S su
 		# Backup the SSH config file
-		sudo cp -n "/home/$USERNAME/.ssh/authorized_keys" "/home/$USERNAME/.ssh/authorized_keys.old"
+		cp -n "/home/$USERNAME/.ssh/authorized_keys" "/home/$USERNAME/.ssh/authorized_keys.old"
 	SSH_EOF
 	# Copy the SSH public key to the host
 	sshpass -p "$PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no "$host"
