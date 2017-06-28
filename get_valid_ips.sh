@@ -5,14 +5,14 @@
 # will run get_ip.sh first, use the IP list from FILENAME_IP, then overwrite
 # valid IP list to FILENAME_IP.
 
-# Get constants
+# Get the constants
 source ./constants.sh
 # Get IPs
 bash ./get_ips.sh
 # Test connection and verify kernel info
 valid_ips=()
 while IFS= read -r ip; do
-	# Determine host
+	# Determine the host
 	host="$USERNAME@$ip"
 	# Check kernel version of the remote machine
 	kernel_version=$(ssh $host "uname -mrs" </dev/null)
@@ -20,9 +20,9 @@ while IFS= read -r ip; do
 		valid_ips+=("$ip")
 	fi
 done < "$FILENAME_IP"
-# Save valid IPs to file
+# Save the valid IPs to the file
 printf "%s\n" "${valid_ips[@]}" > "$FILENAME_IP"
-# List valid IPs
+# List the valid IPs
 echo 'Valid IP list:'
 for valid_ip in "${valid_ips[@]}"; do
 	echo "$valid_ip"

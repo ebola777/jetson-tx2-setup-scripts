@@ -1,14 +1,12 @@
 #!/bin/bash
-# NOTE: You need to manually reboot the client devices for changes to take
-# effect.
 # This script will install and configure NFS on every device. The server device
 # will be installed nfs-kernel-server and set the configuration file
 # /etc/exports; the other clients will be installed nfs-common and set the
-# configuration file /etc/fstab. Then the corresponding commands will be issued
-# for the changes to take effect without rebooting the system. You may want to
-# restart the systems to verify.
+# configuration file /etc/fstab. The corresponding commands will be issued
+# for the changes to take effect without rebooting the system on the server. The
+# clients will be rebooted for the changes to take effect.
 
-# Get constants
+# Get the constants
 source ./constants.sh
 # Get valid IPs
 bash ./get_valid_ips.sh
@@ -20,26 +18,28 @@ if [[ ($response =~ ^[nN]$) ]]; then
 fi
 # Connect to each IP and set up NFS
 while IFS= read -r ip; do
-	# Print separator
+	# Print the separator
 	printf '%20s\n' | tr ' ' -
-	# Print current IP
+	# Print the current IP
 	echo "IP: $ip"
-	# Determine host
+	# Determine the host
 	host="$USERNAME@$ip"
 	if [ "$ip" == "$SERVER_IP" ]; then
 		# Server
-		# Execute script on remote
+		# Execute the script on the server
 		ssh -T "$host" <<- SSH_EOF
-			# Switch to root
+			# Switch to the root
 			echo "$PASSWORD" | sudo -S su
-			# Create cloud folder
-			mkdir /home/ubuntu/cloud
+			# Create the cloud folder
+			mkdir /home/$USERNAME/cloud
 			# Install the package
 			sudo apt-get update
 			echo 'Y' | sudo -S apt-get install nfs-kernel-server
-			# Write config
+			# Backup the config file
+			sudo cp -n '/etc/exports' '/etc/exports.old'
+			# Write the config file
 			sudo tee '/etc/exports' <<- EOF
-				/home/ubuntu/cloud $IP_RANGE(rw,sync,no_subtree_check,no_root_squash)
+				/home/$USERNAME/cloud $IP_RANGE(rw,sync,no_subtree_check,no_root_squash)
 			EOF
 			# Reload the config
 			sudo exportfs -ra
@@ -47,21 +47,23 @@ while IFS= read -r ip; do
 		SSH_EOF
 	else
 		# Client
-		# Execute script on remote
+		# Execute the script on the client
 		ssh -T "$host" <<- SSH_EOF
-			# Switch to root
+			# Switch to the root
 			echo "$PASSWORD" | sudo -S su
-			# Create cloud folder
-			mkdir /home/ubuntu/cloud
+			# Create the cloud folder
+			mkdir /home/$USERNAME/cloud
 			# Install the package
 			sudo apt-get update
 			echo 'Y' | sudo -S apt-get install nfs-common
-			# Write config
+			# Backup the config file
+			sudo cp -n '/etc/fstab' '/etc/fstab.old'
+			# Write the config file
 			sudo tee '/etc/fstab' <<- EOF
-				$SERVER_IP:/home/ubuntu/cloud /home/ubuntu/cloud auto noauto,x-systemd.automount 0 0
+				$SERVER_IP:/home/$USERNAME/cloud /home/$USERNAME/cloud auto noauto,x-systemd.automount 0 0
 			EOF
-			# Reload the config
-			sudo mount -a
+			# Reboot the client
+			sudo reboot
 		SSH_EOF
 	fi
 done < "$FILENAME_IP"

@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script cleans up temporary files.
 
-# Get constants
+# Get the constants
 source ./constants.sh
 # Remove temporary files
 rm "$FILENAME_NMAP"
